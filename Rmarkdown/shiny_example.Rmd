@@ -1,0 +1,28 @@
+---
+title: "Shiny Web App"
+output: html_document
+runtime: shiny
+---
+
+```{r include = FALSE}
+library(shiny)
+library(ggplot2)
+data("iris")
+```
+We can use *rmarkdown* in combination with *Shiny* package, to create interactive reports!
+
+#Interactive plots in Rmarkdown
+
+```{r echo = FALSE}
+selectInput("species", "Choose an Iris Species", 
+  choices = c("setosa","versicolor","virginica"))
+
+
+
+renderPlot({
+ ggplot(iris[iris$Species==input$species,], aes(x=Sepal.Length, y=Sepal.Width, color=Species)) + geom_point() + stat_smooth(method="lm")
+})
+```
+
+
+
