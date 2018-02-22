@@ -1,0 +1,384 @@
+---
+title: "Introduction to ggplot2 graphing library"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+Package ggplot2 was created by Hadley Wickham and based on the so called Grammar of Graphics proposed by Wilkinson on 2006, i.e. a system to systematically compose statistical plots.
+
+Using  the exact words of Wickham in the ggplot2 [introductory book](http://www.hafro.is/~einarhj/education/ggplot2/):
+
+>
+* Data that you want to visualise and a set of aesthetic mappings describing how variables in the data are mapped to aesthetic attributes that you can perceive.
+>
+* Layers made up of geometric elements and statistical transformation. Geometric objects, geoms for short, represent what you actually see on the plot: points, lines, polygons, etc. Statistical transformations, stats for short, summarise data in many useful ways. For example, binning and counting observations to create a histogram, or summarising a 2d relationship with a linear model.
+>
+* The scales map values in the data space to values in an aesthetic space, whether it be colour, or size, or shape. Scales draw a legend or axes, which provide an inverse mapping to make it possible to read the original data values from the plot.
+>
+* A coordinate system, coord for short, describes how data coordinates are mapped to the plane of the graphic. It also provides axes and gridlines to make it possible to read the graph. We normally use a Cartesian coordinate system, but a number of others are available, including polar coordinates and map projections.
+>
+* A faceting specification describes how to break up the data into subsets and how to display those subsets as small multiples. This is also known as conditioning or latticing/trellising.
+>
+* A theme which controls the finer points of display, like the font size and background colour. While the defaults in ggplot2 have been chosen with care, you may need to consult other references to create an attractive plot.
+>
+
+
+# The dataset
+```{r data-import, echo=FALSE , include= FALSE}
+library(ggplot2)
+library(dplyr)
+library(ggcorrplot)
+library(RColorBrewer)
+library(wesanderson)
+library(ggthemes)
+data(diamonds)
+diamonds<-sample_n(diamonds, 10000)
+```
+
+We will be working on the diamonds data set, contained inside the *ggplot2* package.
+
+```{r describe_set}
+head(diamonds)
+
+```
+
+
+The basis for a ggplot2 produced plot is the **ggplot()** command:
+
+```{r basis}
+ggplot(data = diamonds, mapping = aes(x= carat , y = price))
+plot_base <-  ggplot(diamonds,aes( carat,price)) #does the same thing
+plot_base+geom_point(color = "orangered4")
+plot(diamonds$carat, diamonds$price,col = "orangered4")
+
+```
+
+# Geom Types
+
+The ggplot2 offers more than twenty ready geometries to plot one or more variables. An [excellent cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf) is offered by Rstudio.
+
+##One variable
+
+
+
+```{r}
+p<- ggplot(diamonds,aes(price))
+p+geom_area(stat="bin",fill="lightblue",bins=10)+ggtitle("Area Plot")
+p+geom_density(kernel="gaussian",color="firebrick4")+
+  ggtitle("Density Plot \nwith Gaussian kernel")
+p+geom_histogram(stat="bin",bins=10,fill="lightblue",colour="lightblue1")+ggtitle("Area Plot")
+ggplot(diamonds,aes(sample=price))+stat_qq()+ggtitle("Q-Q Plot")
+```
+
+## 2 Variables
+
+
+2 Continuous Variables
+```{r}
+p <- ggplot(diamonds,aes(carat,price))
+p+geom_point()
+p+geom_point()+geom_smooth() #Generalized Additive Models smoothing
+ggplot(diamonds[1:1000,],aes(carat,price,colour=cut))+geom_point(alpha=0.3)+geom_smooth()
+p+geom_jitter()
+
+
+
+```
+
+1 Discrete & 1 Continuous variable
+
+```{r}
+
+p <- ggplot(diamonds,aes(cut,price))
+p+geom_boxplot()
+p+geom_violin()
+
+```
+
+
+# Working with Axes, titles & legends
+
+All the usual parts of a plot can be customized in ggplot2, including 
+the axes labels, the plot title & subtitle etc . 
+
+##Basics
+
+```{r axes_titles}
+p1 <- plot_base+geom_point(color = "orangered4")
+p1+labs(title = "Carat vs Price",subtitle = "Just a simple plot",
+        caption = "Diamond data is contained in ggplot2 package")
+p1+labs(x="Carats",y="price")
+p1+xlab(" Carats") + ylab("Price in $")
+```
+
+##Typesetting
+
+```{r typeset}
+plot_base+geom_point(color = "orangered4") +ggtitle("Carats vs price")+ theme(plot.title= element_text(color="blue",size= 9,face="bold",hjust= 0.5))
+```
+
+## Legends
+
+
+```{r leg_intro}
+p <- ggplot(diamonds, aes(x= color, y= carat, fill= cut))+
+  geom_boxplot()
+p
+p + labs(fill = "Shape of Diamond cut") # Modify legend text
+p + labs(fill = "Shape of \nDiamond cut") # Modify legend text
+```
+
+
+You can also change the order of appearance in legend, 
+
+```{r l_title_labels}
+# Set legend title and labels
+p + scale_fill_discrete(name = "Cut", labels = c("Ideal","Premium","Very Good","  Fair","Good "))
+```
+
+or the order of appearance in the axis
+```{r axis_order}
+p + scale_x_discrete(limits=c( "G","H","I","J","D","E","F"))
+```
+
+#Colors & very basic Themes info
+
+
+R offers a plethora of named colors while accepting color values in the #RRGGBB color format.
+
+![Named colors](http://sape.inf.usi.ch/sites/default/files/ggplot2-colour-names.png)
+
+These can be also used in *ggplot2* plotting:
+
+```{r 1col}
+p <- ggplot(diamonds, aes(color,price,fill=cut))+geom_boxplot()
+p
+p+scale_fill_manual(values=c("red","blue","firebrick","yellow","green"))
+```
+
+Remembering color names can be hard, while arbitrary color choice, as seen above, can lead to aesthetically wrong decisions. Many easier options for color handling exists, for example:
+1. The *RColorBrewer* & *wesanderson* packages which offer a set of predefined color pallets:
+
+RcolorBrewer
+```{r RCB}
+display.brewer.all()
+```
+
+Wes Anderson Colors:
+
+![WesAnderson](https://image.prntscr.com/image/LpyligvKQiydR8tfqq2mfw.png)
+
+
+These pallets can be easily incorporated in ggplot2:
+
+a) RColorbrew
+```{r colorbrew}
+p <- ggplot(diamonds, aes(color,price,fill=cut))+geom_boxplot()
+p+scale_fill_manual(values=brewer.pal(n = 5, name = "RdBu"))
+```
+
+b) wesanderson
+
+```{r wesa}
+p <- ggplot(diamonds, aes(color,price,fill=cut))+geom_boxplot()
+p+scale_fill_manual(values=wes_palette(n=5, name="FantasticFox"))
+```
+
+
+A second more quick options is using ready scales from the *ggtheme* package.
+
+```{r ggtheme_scale_colour}
+p <- ggplot(diamonds, aes(color,price,fill=cut))+geom_boxplot()
+p
+p+scale_fill_gdocs()
+p+scale_fill_tableau()
+p+scale_fill_fivethirtyeight()
+
+```
+
+
+Themes are a way of controlling the overall aesthetics of a plot: combining this ggplot functionality  with the color schemes presented above can lead to the quick creation of eye pleasing and easy to read plots (or not).
+
+```{r ggtheme_themes}
+p <- ggplot(diamonds, aes(color,price,fill=cut))+geom_boxplot()
+p+scale_fill_gdocs()+theme_gdocs()
+p+scale_fill_pander()+theme_pander()
+p+scale_fill_tableau()+theme_tufte()
+
+```
+
+#Facets and side by side plots!
+
+Sometimes, especially in large data sets plotting everything together does not work well. This can be solved by facets.
+
+```{r facets,fig.height = 10, fig.width = 15}
+p<- ggplot(diamonds,aes(carat))+geom_bar(color="firebrick4")
+p
+p+facet_wrap(~cut)
+p+facet_grid(clarity~cut)
+p+facet_grid(clarity~cut, scales="free")
+
+```
+
+
+
+
+
+# Playing with ticks, coord limits,shapes etc.
+
+The following subsection includes  **cook book style** solutions to a number of fairly usual situations:
+
+1. I need to flip my plot coordinates!
+
+```{r coo_flip}
+
+p<- ggplot(diamonds,aes(carat,price,colour=color))+geom_jitter()
+p
+p+coord_flip()
+```
+2. I need smaller / larger axis limits!
+
+
+Function *coord_cartesian()* , zooms in & out i.e. does not cut/clip data not depicted in plot .
+```{r axis_lims_a}
+p <- ggplot(diamonds,aes(x,y,colour=color))+geom_jitter()
+p
+p + coord_cartesian(xlim = c(0, 15), ylim = c(0, 15))
+p + coord_cartesian(xlim = c(2.5, 11), ylim = c(3, 11))
+```
+
+Functions *xlim()* & *ylim()* clip/cut the data
+```{r}
+p <- ggplot(diamonds,aes(x,y,colour=color))+geom_jitter()
+p + xlim(4, 11) + ylim(3, 11)
+```
+
+3. I want to change the number of ticks in the axes!
+
+```{r}
+p <- ggplot(diamonds,aes(x,y,colour=color))+geom_jitter()
+p + scale_x_continuous(breaks=seq(0, 11, 1))
+```
+
+4. I want to rotate my labels!
+
+```{r}
+p <- ggplot(diamonds,aes(cut,y))+geom_violin()
+p
+p + theme(axis.text.x=element_text(angle=40, hjust=0.05, vjust= -0.05))
+p + theme(axis.text.x=element_text(angle=90, hjust=0.5))
+```
+
+
+5. I Want to change point size and shape!
+
+R offers a majority of point shapes:
+![shapes](http://www.sthda.com/sthda/RDoc/images/points-symbols.png)
+
+One can either let ggplot do the choosing (default is circle) or choose any other:
+
+```{r}
+p <- ggplot(diamonds,aes(carat,depth))+geom_point()
+p
+p+geom_point(shape=2)
+
+```
+
+In ggplot shapes can be also assigned per group:
+
+```{r}
+
+p <- ggplot(diamonds,aes(carat,depth))+geom_point(aes(color=cut))
+p
+p+geom_point(aes(color=cut,shape=cut))
+
+
+```
+
+6. I want to change the type of lines I use!
+
+R offers different line types:
+![linetypes](http://www.sthda.com/sthda/RDoc/figure/ggplot2/ggplot2-cheatsheet-line-type-1.png)
+
+```{r}
+ggplot(diamonds[1:20,],aes(x,y))+geom_line()
+ggplot(diamonds[1:20,],aes(x,y))+geom_line(linetype="dotdash")
+```
+
+7. I want two legends/groupings with different colors and shapes
+
+
+```{r}
+ggplot(diamonds, aes(x=carat, y=price, color=clarity, shape=cut)) + geom_point()
+```
+
+8. I want to visualize correlations in my dataset!
+
+One of the key factors of ggplot popularity is the ability to extend it. Such an extension is *ggcorrplot* which allows visualization of correlation matrices.
+A gallery of ggplot2 extensions can be found [here](http://www.ggplot2-exts.org/gallery/).
+
+```{r}
+corr <- round(cor(diamonds[,c(1,5:8)]), 1)
+p_val <- cor_pmat(diamonds[,c(1,5:8)])
+ggcorrplot(corr)
+ggcorrplot(corr, hc.order = TRUE, type = "upper",
+     outline.col = "white",lab = TRUE)
+ggcorrplot(corr, hc.order = TRUE, type = "upper",
+     outline.col = "white",p.mat = p_val)
+
+
+```
+
+9. Timeseries visualization example
+
+Some packages are still on very active development, like ggTimeseries
+
+```{r,echo=FALSE,include=FALSE}
+devtools::install_github('Ather-Energy/ggTimeSeries')
+library(ggTimeSeries)
+library(data.table)
+```
+
+```{r}
+# creating some data
+set.seed(1)
+dtData = data.table(
+      DateCol = seq(
+         as.Date("1/01/2017", "%d/%m/%Y"),
+         as.Date("31/12/2018", "%d/%m/%Y"),
+         "days"
+      ),
+      ValueCol = runif(730)
+   )
+dtData[, ValueCol := ValueCol + (strftime(DateCol,"%u") %in% c(6,7) * runif(1) * 0.75), .I]
+dtData[, ValueCol := ValueCol + (abs(as.numeric(strftime(DateCol,"%m")) - 6.5)) * runif(1) * 0.75, .I]
+
+# base plot
+p1 = ggplot_calendar_heatmap(
+   dtData,
+   'DateCol',
+   'ValueCol'
+)
+
+p1
+# adding some formatting
+p1 + 
+   xlab(NULL) + 
+   ylab(NULL) + 
+   scale_fill_continuous(low = 'green', high = 'red') + 
+   facet_wrap(~Year, ncol = 1)
+```
+
+10. I need to save all my beautiful visuals!
+
+Saving ggplots to graphical files is performed by function *ggsave()* which supports eleven pictures formats.
+
+```{r ggsave}
+p <- ggplot(diamonds, aes(color,price,fill=cut))+geom_boxplot()
+p+scale_fill_gdocs()+theme_gdocs()
+
+ggsave("image.jpg", width = 20, height = 20, units = "cm")
+
+```
